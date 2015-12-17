@@ -1,0 +1,45 @@
+@(dbConfigForm: Form[controllers.DbConfig])(implicit flash: Flash, messages: Messages, session: play.api.mvc.Session, lang: play.api.i18n.Lang)
+
+<html>
+    <head>
+        <title> Slick Schema Exporter </title>
+    </head>
+    <body>
+        <h1> Slick Schema Exporter </h1>
+
+        @helper.form(action = routes.Application.codeGen()) {
+            @helper.inputText(dbConfigForm("tablesCsv"))
+            @helper.inputText(dbConfigForm("dbUrl"))
+            @helper.inputText(dbConfigForm("dbUser"))
+            @helper.inputText(dbConfigForm("dbPassword"))
+
+            <div class="actions">
+                <input type="submit" value="Create" >
+            </div>
+        }
+
+
+        @*<form name="schema_config_form" action="/codeGen" enctype="multipart/form-data" method="post">*@
+        @*<div>*@
+            @*<p>*@
+                @*<label for="tablesCsv">Database URL:</label>*@
+                @*<span><input type="text" name="tablesCsv" id="tablesCsv" size="30" maxlength="125" value="users,countries"></span>*@
+            @*</p>*@
+            @*<p>*@
+                @*<label for="dbUrl">Database URL:</label>*@
+                @*<span><input type="text" name="dbUrl" id="dbUrl" size="30" maxlength="125" value="jdbc:mysql://[db_address]:[db_port]/[db_name]"></span>*@
+            @*</p>*@
+            @*<p>*@
+                @*<label for="dbUser">Database User:</label>*@
+                @*<span><input type="text" name="dbUser" id="dbUser" size="30" maxlength="125" value=""></span>*@
+            @*</p>*@
+            @*<p>*@
+                @*<label for="dbPassword">Database URL:</label>*@
+                @*<span><input type="text" name="dbPassword" id="dbPassword" size="30" maxlength="125" value=""></span>*@
+            @*</p>*@
+
+            @*<p><input class="ibm-btn-arrow-pri ibm-btn-small" name="ibm-search" value="Search" type="submit" onclick="trimSearchByTextValue()"></p>*@
+        @*</div>*@
+        @*</form>*@
+    </body>
+</html>
