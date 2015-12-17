@@ -15,7 +15,7 @@ import slick.jdbc.JdbcBackend
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
-case class DbConfig(tablesCsv: String, dbUrl: String, dbUser: String, dbPassword: String)
+case class DbConfig(tablesCsv: String, dbUrl: String, dbUser: String, dbPassword: String, dbDriver: String)
 
 class Application extends Controller {
 
@@ -24,7 +24,8 @@ class Application extends Controller {
       "tablesCsv"   -> nonEmptyText,
       "dbUrl"       -> nonEmptyText,
       "dbUser"      -> nonEmptyText,
-      "dbPassword"  -> nonEmptyText
+      "dbPassword"  -> nonEmptyText,
+      "dbDriver"    -> nonEmptyText
     )(DbConfig.apply)(DbConfig.unapply))
 
 
@@ -34,11 +35,8 @@ class Application extends Controller {
 
   def codeGen() = Action.async { implicit request =>
     dbConfigForm.bindFromRequest.fold(
-      formWithErrors =>{
-        println(s"--------------${formWithErrors}")
-        Future { BadRequest(views.html.index(formWithErrors)) }
-      },
-      data => buildSlickSchema(data)
+      formWithErrors => Future { BadRequest(views.html.index(formWithErrors)) },
+      data           => buildSlickSchema(data)
     )
   }
 
@@ -54,7 +52,8 @@ class Application extends Controller {
         .flatMap(MySQLDriver.createModelBuilder(_, false).buildModel)
 
 
-    val db: JdbcBackend#DatabaseDef = Database.forConfig("slick.dbs.server-api.db")
+//    val db: JdbcBackend#DatabaseDef = Database.forConfig("slick.dbs.server-api.db")
+    val db: JdbcBackend#DatabaseDef = Database.forURL(dbConfig.dbUrl, dbConfig.dbUser, dbConfig.dbPassword, null, dbConfig.dbDriver)
     val modelFuture = db.run(fetchDataModel)
     // customize code generator
     val codegenFuture = modelFuture.map(model => new SourceCodeGenerator(model) {

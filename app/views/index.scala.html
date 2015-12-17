@@ -11,7 +11,8 @@
             @helper.inputText(dbConfigForm("tablesCsv"))
             @helper.inputText(dbConfigForm("dbUrl"))
             @helper.inputText(dbConfigForm("dbUser"))
-            @helper.inputText(dbConfigForm("dbPassword"))
+            @helper.inputPassword(dbConfigForm("dbPassword"))
+            @helper.inputText(dbConfigForm("dbDriver"))
 
             <div class="actions">
                 <input type="submit" value="Create" >
