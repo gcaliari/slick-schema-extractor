@@ -15,6 +15,7 @@ libraryDependencies ++= Seq(
   ws,
   specs2 % Test,
   "mysql" % "mysql-connector-java" % "5.1.38",
+  "postgresql" % "postgresql" % "9.1-901-1.jdbc4",
   "com.typesafe.play" %% "play-slick" % "1.1.1",
   "com.typesafe.slick" %% "slick" % "3.1.0",
   "com.typesafe.slick" %% "slick-hikaricp" % "3.1.0",

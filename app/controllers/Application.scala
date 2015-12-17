@@ -1,6 +1,5 @@
 package controllers
 
-import play.api.Logger
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms.{mapping, nonEmptyText}
@@ -8,14 +7,22 @@ import play.api.i18n.Messages.Implicits._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.{Result, _}
 import slick.codegen.SourceCodeGenerator
-import slick.driver.MySQLDriver
+import slick.dbio
+import slick.dbio.Effect.All
 import slick.driver.MySQLDriver.api._
+import slick.driver.{MySQLDriver, PostgresDriver}
 import slick.jdbc.JdbcBackend
+import slick.model.Model
 
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
 
 case class DbConfig(tablesCsv: String, dbUrl: String, dbUser: String, dbPassword: String, dbDriver: String)
+
+object Application {
+  val POSTGRES_DRIVER = "org.postgresql.Driver"
+  val MYSQL_DRIVER    = "com.mysql.jdbc.Driver"
+
+}
 
 class Application extends Controller {
 
@@ -25,7 +32,7 @@ class Application extends Controller {
       "dbUrl"       -> nonEmptyText,
       "dbUser"      -> nonEmptyText,
       "dbPassword"  -> nonEmptyText,
-      "dbDriver"    -> nonEmptyText
+      "dbDriver"    -> nonEmptyText.verifying( v => Application.POSTGRES_DRIVER == v || Application.MYSQL_DRIVER == v )
     )(DbConfig.apply)(DbConfig.unapply))
 
 
@@ -46,13 +53,20 @@ class Application extends Controller {
     val included: Array[String] = dbConfig.tablesCsv.split(",")
 
     // fetch data model
-    val fetchDataModel =
-      MySQLDriver.defaultTables
-        .map(_.filter(t => included contains t.name.name))
-        .flatMap(MySQLDriver.createModelBuilder(_, false).buildModel)
+    dbConfig.dbDriver match {
+      case Application.POSTGRES_DRIVER =>
+        val fetchDataModel = PostgresDriver.defaultTables.map(_.filter(t => included contains t.name.name)).flatMap(PostgresDriver.createModelBuilder(_, false).buildModel)
+        fetchFrom(dbConfig, fetchDataModel)
+      case Application.MYSQL_DRIVER =>
+        val fetchDataModel = MySQLDriver.defaultTables.map(_.filter(t => included contains t.name.name)).flatMap(MySQLDriver.createModelBuilder(_, false).buildModel)
+        fetchFrom(dbConfig, fetchDataModel)
+      case _ => Future { BadRequest }
+    }
 
+  }
 
-//    val db: JdbcBackend#DatabaseDef = Database.forConfig("slick.dbs.server-api.db")
+  def fetchFrom(dbConfig: DbConfig, fetchDataModel: dbio.DBIOAction[Model, NoStream, All with All]): Future[Result] = {
+    //    val db: JdbcBackend#DatabaseDef = Database.forConfig("slick.dbs.server-api.db")
     val db: JdbcBackend#DatabaseDef = Database.forURL(dbConfig.dbUrl, dbConfig.dbUser, dbConfig.dbPassword, null, dbConfig.dbDriver)
     val modelFuture = db.run(fetchDataModel)
     // customize code generator
@@ -83,10 +97,10 @@ class Application extends Controller {
       //        }
       //      }
     })
-    codegenFuture.onComplete {
-      case Success(codegen) => codegen.writeToFile("slick.driver.MySQLDriver", "tmp/", "models")
-      case Failure(e) => Logger.warn(s"Code generation ended on Failure='${e.getMessage}'")
-    }
+    //    codegenFuture.onComplete {
+    //      case Success(codegen) => codegen.writeToFile("slick.driver.MySQLDriver", "tmp/", "models")
+    //      case Failure(e) => Logger.warn(s"Code generation ended on Failure='${e.getMessage}'")
+    //    }
     codegenFuture.map { r =>
       val result = r.code
       db.close()
